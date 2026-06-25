@@ -2,6 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from ovos_spec_tools import SpecMessage
+
 from ovos_ui_enclosure_protocol import EnclosureProtocolListener
 
 
@@ -64,7 +66,7 @@ def test_callbacks_in_constructor_fire(bus):
     )
     sentinel = object()
     bus.emit_event("enclosure.eyes.color", sentinel)
-    bus.emit_event("recognizer_loop:record_begin", sentinel)
+    bus.emit_event(SpecMessage.LISTENER_RECORD_STARTED, sentinel)
     assert hits == {"eyes_color": sentinel, "record_begin": sentinel}
 
 
@@ -86,7 +88,7 @@ def test_event_without_callback_is_ignored(bus):
     # no callbacks registered: emitting must not raise
     EnclosureProtocolListener(bus=bus)
     bus.emit_event("enclosure.eyes.on")
-    bus.emit_event("speak")
+    bus.emit_event(SpecMessage.SPEAK)
 
 
 @pytest.mark.parametrize("name,topic", [

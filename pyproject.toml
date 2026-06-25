@@ -12,7 +12,8 @@ authors = [{name = "JarbasAi", email = "jarbasai@mailfence.com"}]
 requires-python = ">=3.10"
 keywords = ["enclosure", "mark1", "mycroft", "OVOS", "OpenVoiceOS", "PHAL"]
 dependencies = [
-    "ovos-bus-client",
+    "ovos-bus-client>=2.2.0a1",
+    "ovos-spec-tools>=0.9.0a1",
 ]
 
 [project.optional-dependencies]
