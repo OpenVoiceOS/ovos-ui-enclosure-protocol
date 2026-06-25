@@ -1,13 +1,15 @@
 """Consumer side of the enclosure protocol.
 
-``EnclosureProtocolListener`` is a mix-in that wires the ``enclosure.*`` bus
-messages emitted by :class:`EnclosureAPI` to overridable no-op handler methods.
-A hardware enclosure plugin inherits this mix-in to get the subscriptions wired
-up and only overrides the handlers it cares about.
+``EnclosureProtocolListener`` is a mix-in that wires the bus messages an
+enclosure reacts to — both the ``enclosure.*`` commands emitted by
+:class:`EnclosureAPI` and the core lifecycle events (record/speak/wake/sleep)
+that an enclosure animates to — to overridable no-op handler methods. A
+hardware enclosure plugin inherits this mix-in and only overrides the handlers
+it cares about.
 
-This deliberately does NOT include the general PHAL lifecycle (Thread/run/
-shutdown/register_core_events) — those stay in ``ovos-plugin-manager``'s
-``PHALPlugin``. The listener base only needs ``self.bus``.
+The mix-in needs only ``self.bus``; it does not include the PHAL plugin
+lifecycle (Thread/run/process management), which stays in
+``ovos-plugin-manager``'s ``PHALPlugin``.
 
 ``ovos-PHAL-plugin-mk1`` is the reference implementation that subclasses this
 listener.
@@ -15,15 +17,65 @@ listener.
 
 
 class EnclosureProtocolListener:
-    """Mix-in that subscribes a hardware plugin to the ``enclosure.*`` protocol.
+    """Mix-in that subscribes a hardware plugin to the enclosure protocol.
 
-    Subclasses are expected to provide a ``self.bus`` (a connected
-    ``MessageBusClient``) before calling :meth:`register_enclosure_namespace`,
-    and to override the ``on_*`` handlers they support. Every handler defaults
-    to a no-op so unsupported commands are simply ignored.
+    Subclasses provide a ``self.bus`` (a connected ``MessageBusClient``) and
+    call :meth:`register_enclosure_namespace` (the ``enclosure.*`` commands) and
+    :meth:`register_core_events` (the record/speak/wake/sleep lifecycle the
+    enclosure animates to), then override the ``on_*`` handlers they support.
+    Every handler defaults to a no-op so unsupported events are simply ignored.
     """
 
     _mouth_events = False
+
+    def register_core_events(self):
+        """Wire the core lifecycle bus events an enclosure animates to."""
+        self.bus.on('recognizer_loop:record_begin', self.on_record_begin)
+        self.bus.on('recognizer_loop:record_end', self.on_record_end)
+        self.bus.on("recognizer_loop:sleep", self.on_sleep)
+        self.bus.on('recognizer_loop:audio_output_start', self.on_audio_output_start)
+        self.bus.on('recognizer_loop:audio_output_end', self.on_audio_output_end)
+        self.bus.on("mycroft.awoken", self.on_awake)
+        self.bus.on("speak", self.on_speak)
+
+    def shutdown_core_events(self):
+        """Remove the core lifecycle subscriptions wired by register_core_events."""
+        self.bus.remove('recognizer_loop:record_begin', self.on_record_begin)
+        self.bus.remove('recognizer_loop:record_end', self.on_record_end)
+        self.bus.remove("recognizer_loop:sleep", self.on_sleep)
+        self.bus.remove('recognizer_loop:audio_output_start', self.on_audio_output_start)
+        self.bus.remove('recognizer_loop:audio_output_end', self.on_audio_output_end)
+        self.bus.remove("mycroft.awoken", self.on_awake)
+        self.bus.remove("speak", self.on_speak)
+
+    # Core lifecycle handlers (no-ops by default)
+    def on_record_begin(self, message=None):
+        """Listening started (``recognizer_loop:record_begin``)."""
+        pass
+
+    def on_record_end(self, message=None):
+        """Listening ended (``recognizer_loop:record_end``)."""
+        pass
+
+    def on_audio_output_start(self, message=None):
+        """Speaking started (``recognizer_loop:audio_output_start``)."""
+        pass
+
+    def on_audio_output_end(self, message=None):
+        """Speaking ended (``recognizer_loop:audio_output_end``)."""
+        pass
+
+    def on_awake(self, message=None):
+        """Wakeup animation (``mycroft.awoken``)."""
+        pass
+
+    def on_sleep(self, message=None):
+        """Naptime animation (``recognizer_loop:sleep``)."""
+        pass
+
+    def on_speak(self, message=None):
+        """A ``speak`` message; for enclosures that disregard visemes."""
+        pass
 
     def register_enclosure_namespace(self):
         """Wire all ``enclosure.*`` messages to this listener's handlers."""

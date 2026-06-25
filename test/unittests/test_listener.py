@@ -68,6 +68,18 @@ EXPECTED_EVENTS = [
 ]
 
 
+# core lifecycle events the enclosure animates to
+CORE_EVENTS = [
+    "recognizer_loop:record_begin",
+    "recognizer_loop:record_end",
+    "recognizer_loop:sleep",
+    "recognizer_loop:audio_output_start",
+    "recognizer_loop:audio_output_end",
+    "mycroft.awoken",
+    "speak",
+]
+
+
 @pytest.fixture
 def bus():
     return FakeBus()
@@ -233,3 +245,44 @@ def test_subclass_overrides_handler(bus):
     msg = MagicMock()
     bus.emit_event("enclosure.eyes.color", msg)
     assert received == [msg]
+
+
+# ---- core lifecycle events ----
+
+def test_register_core_events_wires_all(listener, bus):
+    listener.register_core_events()
+    registered = {mt for mt, _ in bus.on_calls}
+    assert registered == set(CORE_EVENTS)
+
+
+def test_shutdown_core_events_removes_all(listener, bus):
+    listener.register_core_events()
+    listener.shutdown_core_events()
+    removed = {mt for mt, _ in bus.remove_calls}
+    assert removed == set(CORE_EVENTS)
+    assert all(len(cbs) == 0 for cbs in bus.handlers.values())
+
+
+@pytest.mark.parametrize("event,handler_name", [
+    ("recognizer_loop:record_begin", "on_record_begin"),
+    ("recognizer_loop:record_end", "on_record_end"),
+    ("recognizer_loop:sleep", "on_sleep"),
+    ("recognizer_loop:audio_output_start", "on_audio_output_start"),
+    ("recognizer_loop:audio_output_end", "on_audio_output_end"),
+    ("mycroft.awoken", "on_awake"),
+    ("speak", "on_speak"),
+])
+def test_core_event_routes_to_handler(bus, event, handler_name):
+    listener = Listener(bus)
+    called = {}
+    setattr(listener, handler_name, lambda message=None: called.setdefault("hit", message))
+    listener.register_core_events()
+    sentinel = object()
+    bus.emit_event(event, sentinel)
+    assert called.get("hit") is sentinel
+
+
+def test_core_default_handlers_are_noops(listener):
+    for name in ("on_record_begin", "on_record_end", "on_audio_output_start",
+                 "on_audio_output_end", "on_awake", "on_sleep", "on_speak"):
+        assert getattr(listener, name)(MagicMock()) is None

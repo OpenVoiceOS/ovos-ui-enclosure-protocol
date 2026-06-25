@@ -38,9 +38,9 @@ The only runtime dependency is `ovos-bus-client` (for the bus message types).
 ## Implementing a listener
 
 A hardware enclosure plugin inherits the mix-in, provides a connected
-`self.bus`, calls `register_enclosure_namespace()`, and overrides only the
-handlers its hardware supports — every handler defaults to a no-op so
-unsupported commands are simply ignored:
+`self.bus`, wires the subscriptions, and overrides only the handlers its
+hardware supports — every handler defaults to a no-op so unsupported events are
+simply ignored:
 
 ```python
 from ovos_ui_enclosure_protocol import EnclosureProtocolListener
@@ -48,23 +48,36 @@ from ovos_ui_enclosure_protocol import EnclosureProtocolListener
 class MyEnclosure(EnclosureProtocolListener):
     def __init__(self, bus):
         self.bus = bus
-        self.register_enclosure_namespace()
+        self.register_enclosure_namespace()  # enclosure.* commands
+        self.register_core_events()          # record/speak/wake/sleep lifecycle
 
     def on_eyes_color(self, message=None):
         r, g, b = message.data["r"], message.data["g"], message.data["b"]
         ...  # drive the hardware
 
+    def on_record_begin(self, message=None):
+        ...  # show a "listening" animation
+
     def shutdown(self):
         self.shutdown_enclosure_namespace()
+        self.shutdown_core_events()
 ```
+
+The listener wires two groups of events:
+
+- **`register_enclosure_namespace()`** — the `enclosure.*` command topics (eyes,
+  mouth/faceplate, system).
+- **`register_core_events()`** — the core lifecycle an enclosure animates to:
+  `recognizer_loop:record_begin`/`record_end`/`sleep`/`audio_output_start`/
+  `audio_output_end`, `mycroft.awoken`, `speak`.
 
 Mouth-animation commands (`talk`/`think`/`listen`/`smile`/`viseme`) are gated
 by `mouth_events_active`, toggled via the
 `enclosure.mouth.events.activate`/`deactivate` messages.
 
-The mix-in deliberately excludes the general PHAL lifecycle (Thread/`run`/
-`shutdown`/`register_core_events`) — those stay in `ovos-plugin-manager`'s
-`PHALPlugin`. The listener only needs `self.bus`.
+The mix-in needs only `self.bus`; it excludes the PHAL plugin lifecycle
+(Thread/`run`/process management), which stays in `ovos-plugin-manager`'s
+`PHALPlugin`.
 
 ## Emitting commands (producer)
 
