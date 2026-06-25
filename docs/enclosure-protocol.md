@@ -7,7 +7,9 @@ display, and the system LEDs.
 It is a two-sided protocol:
 
 - **Producers** emit `enclosure.*` messages. The reference producer is
-  `EnclosureAPI` (this package); any skill or component that wants to drive the
+  `EnclosureAPI`, which lives in
+  [`ovos-gui-api-client`](https://github.com/OpenVoiceOS/ovos-gui-api-client)
+  alongside `GUIInterface`; any skill or component that wants to drive the
   enclosure uses it.
 - **Listeners / consumers** subscribe to `enclosure.*` messages and drive the
   actual hardware. The `EnclosureProtocolListener` mix-in (this package) wires
@@ -18,10 +20,10 @@ It is a two-sided protocol:
   faceplate and eyes. Other enclosure hardware plugins implement the same
   contract for their own hardware; unsupported commands may simply be ignored.
 
-This package owns the producer side and the protocol definition. The listeners
-stay in the hardware PHAL plugins. The protocol is **not** a core abstraction —
-only hardware enclosure plugins should listen; generic/core enclosure-event
-listeners do not belong anywhere else.
+This package owns the listener side and the protocol definition; the producer
+(`EnclosureAPI`) lives in `ovos-gui-api-client`. The protocol is **not** a core
+abstraction — only hardware enclosure plugins should listen; generic/core
+enclosure-event listeners do not belong anywhere else.
 
 All messages are emitted via `Message.forward(...)`, so they inherit context
 (including `skill_id` and a `destination` of `["enclosure"]`) from the inbound
