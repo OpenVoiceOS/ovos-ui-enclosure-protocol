@@ -23,6 +23,8 @@ Any event whose callback is omitted is ignored. The mouth-animation callbacks
 ``ovos-PHAL-plugin-mk1`` is the reference consumer.
 """
 
+from ovos_spec_tools import SpecMessage
+
 
 class EnclosureProtocolListener:
     """Route enclosure-protocol bus messages to per-event callbacks.
@@ -35,13 +37,13 @@ class EnclosureProtocolListener:
         bus: a connected ``MessageBusClient``. When given, the subscriptions are
             wired immediately; otherwise call :meth:`set_bus` later.
 
-        on_record_begin: voice-command capture started (``recognizer_loop:record_begin``).
-        on_record_end: voice-command capture ended (``recognizer_loop:record_end``).
-        on_sleep: entered sleep mode (``recognizer_loop:sleep``).
-        on_audio_output_start: TTS playback started (``recognizer_loop:audio_output_start``).
-        on_audio_output_end: TTS playback ended (``recognizer_loop:audio_output_end``).
-        on_awoken: left sleep mode (``mycroft.awoken``).
-        on_speak: a ``speak`` message; for enclosures that disregard visemes.
+        on_record_begin: voice-command capture started (``ovos.listener.record.started``).
+        on_record_end: voice-command capture ended (``ovos.listener.record.ended``).
+        on_sleep: entered sleep mode (``ovos.listener.sleep``).
+        on_audio_output_start: TTS playback started (``ovos.audio.output.started``).
+        on_audio_output_end: TTS playback ended (``ovos.audio.output.ended``).
+        on_awoken: left sleep mode (``ovos.listener.awoken``).
+        on_speak: a ``ovos.utterance.speak`` message; for enclosures that disregard visemes.
 
         on_no_internet: no-internet notification (``enclosure.notify.no_internet``).
         on_reset: restore the enclosure to its started state (``enclosure.reset``).
@@ -79,13 +81,13 @@ class EnclosureProtocolListener:
 
     # callback name -> (bus topic, mouth-event-gated)
     CORE_EVENTS = {
-        "on_record_begin": ("recognizer_loop:record_begin", False),
-        "on_record_end": ("recognizer_loop:record_end", False),
-        "on_sleep": ("recognizer_loop:sleep", False),
-        "on_audio_output_start": ("recognizer_loop:audio_output_start", False),
-        "on_audio_output_end": ("recognizer_loop:audio_output_end", False),
-        "on_awoken": ("mycroft.awoken", False),
-        "on_speak": ("speak", False),
+        "on_record_begin": (SpecMessage.LISTENER_RECORD_STARTED, False),
+        "on_record_end": (SpecMessage.LISTENER_RECORD_ENDED, False),
+        "on_sleep": (SpecMessage.LISTENER_SLEEP, False),
+        "on_audio_output_start": (SpecMessage.AUDIO_OUTPUT_STARTED, False),
+        "on_audio_output_end": (SpecMessage.AUDIO_OUTPUT_ENDED, False),
+        "on_awoken": (SpecMessage.LISTENER_AWOKEN, False),
+        "on_speak": (SpecMessage.SPEAK, False),
     }
     ENCLOSURE_EVENTS = {
         "on_no_internet": ("enclosure.notify.no_internet", False),
