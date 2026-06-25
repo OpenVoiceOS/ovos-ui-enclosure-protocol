@@ -37,47 +37,49 @@ The only runtime dependency is `ovos-bus-client` (for the bus message types).
 
 ## Implementing a listener
 
-A hardware enclosure plugin inherits the mix-in, provides a connected
-`self.bus`, wires the subscriptions, and overrides only the handlers its
-hardware supports — every handler defaults to a no-op so unsupported events are
-simply ignored:
+A hardware enclosure plugin **instantiates** the listener (composition — it is
+not a mix-in), passing the bus and a callback per event it supports. Each
+callback is an explicit keyword argument, so an IDE lists them and their
+docstrings; events whose callback is omitted are simply ignored:
 
 ```python
 from ovos_ui_enclosure_protocol import EnclosureProtocolListener
 
-class MyEnclosure(EnclosureProtocolListener):
-    def __init__(self, bus):
-        self.bus = bus
-        self.register_enclosure_namespace()  # enclosure.* commands
-        self.register_core_events()          # record/speak/wake/sleep lifecycle
+class MyEnclosure(PHALPlugin):
+    def __init__(self, bus=None, config=None):
+        super().__init__(bus=bus, config=config)
+        self.enclosure = EnclosureProtocolListener(
+            bus=self.bus,
+            on_eyes_color=self._drive_eyes_color,   # enclosure.* command
+            on_record_begin=self._show_listening,   # lifecycle event
+            on_talk=self._animate_mouth,            # mouth-gated
+        )
 
-    def on_eyes_color(self, message=None):
+    def _drive_eyes_color(self, message=None):
         r, g, b = message.data["r"], message.data["g"], message.data["b"]
         ...  # drive the hardware
 
-    def on_record_begin(self, message=None):
-        ...  # show a "listening" animation
-
     def shutdown(self):
-        self.shutdown_enclosure_namespace()
-        self.shutdown_core_events()
+        self.enclosure.shutdown()
+        super().shutdown()
 ```
 
-The listener wires two groups of events:
+The listener wires two groups of events (see `EnclosureProtocolListener`'s
+keyword arguments for the full list with docstrings):
 
-- **`register_enclosure_namespace()`** — the `enclosure.*` command topics (eyes,
-  mouth/faceplate, system).
-- **`register_core_events()`** — the core lifecycle an enclosure animates to:
+- the **`enclosure.*`** command topics (eyes, mouth/faceplate, system), and
+- the **core lifecycle** an enclosure animates to:
   `recognizer_loop:record_begin`/`record_end`/`sleep`/`audio_output_start`/
   `audio_output_end`, `mycroft.awoken`, `speak`.
 
-Mouth-animation commands (`talk`/`think`/`listen`/`smile`/`viseme`) are gated
-by `mouth_events_active`, toggled via the
-`enclosure.mouth.events.activate`/`deactivate` messages.
+The mouth-animation callbacks (`on_talk`/`on_think`/`on_listen`/`on_smile`/
+`on_viseme`/`on_viseme_list`) only fire while mouth events are active, toggled
+by `activate_mouth_events()`/`deactivate_mouth_events()` (and the
+`enclosure.mouth.events.activate`/`deactivate` messages). A callback can also be
+(re)assigned later with `set_callback("on_eyes_color", fn)`.
 
-The mix-in needs only `self.bus`; it excludes the PHAL plugin lifecycle
-(Thread/`run`/process management), which stays in `ovos-plugin-manager`'s
-`PHALPlugin`.
+The listener needs only the bus; the PHAL plugin lifecycle (Thread/`run`/process
+management) stays in `ovos-plugin-manager`'s `PHALPlugin`.
 
 ## Emitting commands (producer)
 
