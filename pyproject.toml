@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ovos-ui-enclosure-protocol"
+dynamic = ["version"]
+description = "Legacy Mark-1 hardware enclosure protocol and EnclosureAPI producer helper for OpenVoiceOS"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{name = "JarbasAi", email = "jarbasai@mailfence.com"}]
+requires-python = ">=3.10"
+keywords = ["enclosure", "mark1", "mycroft", "OVOS", "OpenVoiceOS", "PHAL"]
+dependencies = [
+    "ovos-bus-client",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol"
+Repository = "https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol"
+
+[tool.setuptools.packages.find]
+include = ["ovos_ui_enclosure_protocol*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "ovos_ui_enclosure_protocol.version.__version__"}
