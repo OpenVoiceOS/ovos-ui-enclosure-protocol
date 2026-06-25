@@ -1,30 +1,31 @@
 # ovos-ui-enclosure-protocol
 
-The canonical home of the legacy Mark-1 hardware enclosure protocol and the
-`EnclosureAPI` producer helper.
+The consumer/listener home of the legacy Mark-1 hardware enclosure protocol.
 
 ## What this package is
 
-`EnclosureAPI` is the skill-facing helper that emits the `enclosure.*` bus
-messages used to drive Mark-1 hardware: the LED eyes, the mouth/faceplate
-display, and the system LEDs. Skills (the producers) call `EnclosureAPI`
-methods; hardware enclosure PHAL plugins (the listeners) consume the resulting
-messages and drive the hardware.
+The `enclosure.*` bus messages drive Mark-1 hardware: the LED eyes, the
+mouth/faceplate display, and the system LEDs. This is a two-sided protocol:
 
-This package provides both sides:
-
-- `EnclosureAPI` — the producer helper skills use to emit `enclosure.*`.
-- `EnclosureProtocolListener` — a consumer mix-in that wires the `enclosure.*`
-  subscriptions to overridable no-op handlers, for hardware enclosure plugins.
+- **Producer** — `EnclosureAPI`, the skill-facing helper that emits
+  `enclosure.*`. It lives in
+  [`ovos-gui-api-client`](https://github.com/OpenVoiceOS/ovos-gui-api-client)
+  alongside `GUIInterface`, so `self.gui` and `self.enclosure` come from the
+  same client. This package does **not** reimplement it.
+- **Listener** — `EnclosureProtocolListener` (this package), a consumer mix-in
+  that wires the `enclosure.*` subscriptions to overridable no-op handlers, for
+  hardware enclosure plugins.
 
 The reference listener implementation is
 [`ovos-PHAL-plugin-mk1`](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-mk1),
 which subclasses `EnclosureProtocolListener`.
 
-The enclosure protocol is **no longer a core abstraction**. Modern visual
-output is handled by `GUIInterface` (OVOS-GUI-1) and its template system. This
-package is strictly the legacy hardware-enclosure protocol; it does not
-reimplement GUI templates.
+The enclosure protocol is **no longer a core abstraction**: `PHALPlugin` in
+`ovos-plugin-manager` no longer bakes in the `enclosure.*` handlers. A hardware
+plugin that wants enclosure-protocol support mixes in
+`EnclosureProtocolListener` from this package instead. Modern visual output is
+handled by `GUIInterface` (OVOS-GUI-1) and its template system; this package is
+strictly the legacy hardware-enclosure protocol.
 
 ## Install
 
@@ -32,72 +33,49 @@ reimplement GUI templates.
 pip install ovos-ui-enclosure-protocol
 ```
 
-The only runtime dependency is `ovos-bus-client` (for `Message` and
-`dig_for_message`).
+The only runtime dependency is `ovos-bus-client` (for the bus message types).
 
-## Using EnclosureAPI
+## Implementing a listener
 
-Construct an `EnclosureAPI` with a connected `MessageBusClient` and your
-`skill_id`, then call methods to emit enclosure commands:
+A hardware enclosure plugin inherits the mix-in, provides a connected
+`self.bus`, calls `register_enclosure_namespace()`, and overrides only the
+handlers its hardware supports — every handler defaults to a no-op so
+unsupported commands are simply ignored:
 
 ```python
-from ovos_ui_enclosure_protocol import EnclosureAPI
+from ovos_ui_enclosure_protocol import EnclosureProtocolListener
+
+class MyEnclosure(EnclosureProtocolListener):
+    def __init__(self, bus):
+        self.bus = bus
+        self.register_enclosure_namespace()
+
+    def on_eyes_color(self, message=None):
+        r, g, b = message.data["r"], message.data["g"], message.data["b"]
+        ...  # drive the hardware
+
+    def shutdown(self):
+        self.shutdown_enclosure_namespace()
+```
+
+Mouth-animation commands (`talk`/`think`/`listen`/`smile`/`viseme`) are gated
+by `mouth_events_active`, toggled via the
+`enclosure.mouth.events.activate`/`deactivate` messages.
+
+The mix-in deliberately excludes the general PHAL lifecycle (Thread/`run`/
+`shutdown`/`register_core_events`) — those stay in `ovos-plugin-manager`'s
+`PHALPlugin`. The listener only needs `self.bus`.
+
+## Emitting commands (producer)
+
+Skills emit `enclosure.*` via `EnclosureAPI` from `ovos-gui-api-client`:
+
+```python
+from ovos_gui_api_client import EnclosureAPI
 
 enclosure = EnclosureAPI(bus=bus, skill_id="my.skill")
-
-# eyes
-enclosure.eyes_on()
 enclosure.eyes_color(r=0, g=128, b=255)
-enclosure.eyes_blink("b")        # 'r', 'l' or 'b'
-enclosure.eyes_fill(50)          # progress meter, 0-100
-enclosure.eyes_reset()
-
-# mouth / faceplate
-enclosure.mouth_talk()
 enclosure.mouth_text("hello")
-enclosure.mouth_display_png("/path/to/image.png")
-enclosure.mouth_reset()
-
-# system
-enclosure.system_blink(2)
-enclosure.system_mute()
-```
-
-The bus and skill_id can also be set after construction:
-
-```python
-enclosure = EnclosureAPI()
-enclosure.set_bus(bus)
-enclosure.set_id("my.skill")
-```
-
-### Reading eye color back
-
-`get_eyes_color()` and `get_eyes_pixel_color(idx)` issue a request/response
-round-trip (`enclosure.eyes.rgb.get` → `enclosure.eyes.rgb`) and raise
-`TimeoutError` if no listener responds.
-
-### Input validation
-
-A few methods guard their arguments and raise `ValueError`:
-
-- `eyes_setpixel(idx, ...)` / `get_eyes_pixel_color(idx)` — `idx` must be 0-23.
-- `eyes_fill(percentage)` — `percentage` must be 0-100.
-- `eyes_volume(volume)` — `volume` must be 0-11.
-
-## Migrating from ovos-bus-client
-
-`EnclosureAPI` used to live at `ovos_bus_client.apis.enclosure`. It has been
-removed from `ovos-bus-client` as a core abstraction and rehoused here, with
-the public method surface and the bus contract kept identical. Migration is an
-import change only:
-
-```python
-# before
-from ovos_bus_client.apis.enclosure import EnclosureAPI
-
-# after
-from ovos_ui_enclosure_protocol import EnclosureAPI
 ```
 
 ## See also

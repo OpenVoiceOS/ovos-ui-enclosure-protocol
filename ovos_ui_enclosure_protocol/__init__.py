@@ -1,22 +1,24 @@
 """ovos-ui-enclosure-protocol.
 
-Canonical home of the legacy Mark-1 hardware enclosure protocol and the
-``EnclosureAPI`` producer helper. ``EnclosureAPI`` emits the ``enclosure.*``
-bus messages that hardware enclosure PHAL plugins (``ovos-PHAL-plugin-mk1``
-being the reference listener) consume to drive eyes, mouth/faceplate and
-system LEDs.
+Consumer side of the legacy Mark-1 hardware enclosure protocol.
 
-The consumer side is the ``EnclosureProtocolListener`` mix-in, which a hardware
-enclosure plugin inherits to wire the ``enclosure.*`` subscriptions to
-overridable no-op handlers (``ovos-PHAL-plugin-mk1`` is the reference
-implementation).
+``EnclosureProtocolListener`` is a mix-in that a hardware enclosure plugin
+inherits to wire the ``enclosure.*`` bus subscriptions to overridable no-op
+handlers, so a plugin only implements the commands its hardware supports.
+``ovos-PHAL-plugin-mk1`` is the reference listener implementation.
 
-This is the legacy hardware-enclosure protocol only. Modern visual output is
-handled by ``GUIInterface`` (OVOS-GUI-1); this package does not reimplement
-GUI templates.
+The producer side (``EnclosureAPI``, the skill-facing helper that emits the
+``enclosure.*`` messages) lives in ``ovos-gui-api-client`` alongside
+``GUIInterface`` — ``self.gui`` and ``self.enclosure`` come from the same
+client. This package does not reimplement it.
+
+The enclosure protocol is **no longer a core abstraction**: ``PHALPlugin`` in
+``ovos-plugin-manager`` no longer wires ``enclosure.*`` handlers. A hardware
+plugin that wants enclosure-protocol support mixes in
+``EnclosureProtocolListener`` from this package instead. Modern visual output
+is handled by ``GUIInterface`` (OVOS-GUI-1) and its template system.
 """
-from ovos_ui_enclosure_protocol.enclosure import EnclosureAPI
 from ovos_ui_enclosure_protocol.listener import EnclosureProtocolListener
 from ovos_ui_enclosure_protocol.version import __version__
 
-__all__ = ["EnclosureAPI", "EnclosureProtocolListener", "__version__"]
+__all__ = ["EnclosureProtocolListener", "__version__"]
