@@ -11,10 +11,15 @@ display, and the system LEDs. Skills (the producers) call `EnclosureAPI`
 methods; hardware enclosure PHAL plugins (the listeners) consume the resulting
 messages and drive the hardware.
 
-This package is the producer side and the protocol definition. The listener
-side lives in hardware PHAL plugins, with
-[`ovos-PHAL-plugin-mk1`](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-mk1)
-as the reference implementation.
+This package provides both sides:
+
+- `EnclosureAPI` — the producer helper skills use to emit `enclosure.*`.
+- `EnclosureProtocolListener` — a consumer mix-in that wires the `enclosure.*`
+  subscriptions to overridable no-op handlers, for hardware enclosure plugins.
+
+The reference listener implementation is
+[`ovos-PHAL-plugin-mk1`](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-mk1),
+which subclasses `EnclosureProtocolListener`.
 
 The enclosure protocol is **no longer a core abstraction**. Modern visual
 output is handled by `GUIInterface` (OVOS-GUI-1) and its template system. This

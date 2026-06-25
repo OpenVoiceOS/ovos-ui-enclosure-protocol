@@ -38,6 +38,25 @@ enclosure.mouth_reset()                  # clear the faceplate
 Every method forwards a single `enclosure.*` `Message` on the bus. Consumers
 (hardware PHAL plugins) decide how — or whether — to render each command.
 
+## Implementing a listener
+
+Hardware enclosure plugins consume the same protocol via the
+`EnclosureProtocolListener` mix-in:
+
+```python
+from ovos_ui_enclosure_protocol import EnclosureProtocolListener
+
+class MyEnclosure(EnclosureProtocolListener):
+    def __init__(self, bus):
+        self.bus = bus
+        self.register_enclosure_namespace()
+
+    def on_eyes_color(self, message=None):
+        ...  # drive the hardware
+```
+
+`ovos-PHAL-plugin-mk1` is the reference listener implementation.
+
 ## Migrating from ovos-bus-client
 
 `EnclosureAPI` previously lived at `ovos_bus_client.apis.enclosure`. The public

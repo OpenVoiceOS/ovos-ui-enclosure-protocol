@@ -10,11 +10,13 @@ It is a two-sided protocol:
   `EnclosureAPI` (this package); any skill or component that wants to drive the
   enclosure uses it.
 - **Listeners / consumers** subscribe to `enclosure.*` messages and drive the
-  actual hardware. The reference listener is
+  actual hardware. The `EnclosureProtocolListener` mix-in (this package) wires
+  all the subscriptions to overridable no-op handlers, so a hardware plugin only
+  overrides the commands it supports. The reference listener is
   [`ovos-PHAL-plugin-mk1`](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-mk1),
-  which implements the full contract for the Mark-1 faceplate and eyes. Other
-  enclosure hardware plugins implement the same contract for their own
-  hardware; unsupported commands may simply be ignored.
+  which subclasses the mix-in and implements the full contract for the Mark-1
+  faceplate and eyes. Other enclosure hardware plugins implement the same
+  contract for their own hardware; unsupported commands may simply be ignored.
 
 This package owns the producer side and the protocol definition. The listeners
 stay in the hardware PHAL plugins. The protocol is **not** a core abstraction —
@@ -24,6 +26,32 @@ listeners do not belong anywhere else.
 All messages are emitted via `Message.forward(...)`, so they inherit context
 (including `skill_id` and a `destination` of `["enclosure"]`) from the inbound
 message when one is available.
+
+## Implementing a listener
+
+Inherit `EnclosureProtocolListener`, set `self.bus`, and call
+`register_enclosure_namespace()` to wire all `enclosure.*` messages to the
+mix-in's handlers. Override the `on_*` handlers for the commands your hardware
+supports; the rest stay no-ops. `shutdown_enclosure_namespace()` removes every
+subscription again.
+
+```python
+from ovos_ui_enclosure_protocol import EnclosureProtocolListener
+
+class MyEnclosure(EnclosureProtocolListener):
+    def __init__(self, bus):
+        self.bus = bus
+        self.register_enclosure_namespace()
+
+    def on_eyes_color(self, message=None):
+        r, g, b = message.data["r"], message.data["g"], message.data["b"]
+        ...  # drive the hardware
+```
+
+Mouth animation commands (`talk`, `think`, `listen`, `smile`, `viseme`,
+`viseme_list`) are gated by `mouth_events_active`, toggled by the
+`enclosure.mouth.events.activate` / `.deactivate` messages. When mouth events
+are inactive those handlers are suppressed.
 
 ## Message contract
 
