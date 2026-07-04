@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0a2](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/tree/1.0.0a2) (2026-07-04)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/compare/1.0.0a1...1.0.0a2)
+
+**Merged pull requests:**
+
+- Configure Renovate [\#1](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/pull/1) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [1.0.0a1](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/tree/1.0.0a1) (2026-07-04)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/compare/0.0.1...1.0.0a1)
