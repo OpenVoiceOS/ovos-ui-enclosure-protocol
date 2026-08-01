@@ -10,8 +10,8 @@ inherits to wire the `enclosure.*` subscriptions to overridable no-op handlers.
 [`ovos-PHAL-plugin-mk1`](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-mk1)
 is the reference listener implementation.
 
-The producer side — `EnclosureAPI`, the skill-facing helper that *emits*
-`enclosure.*` — lives in
+The producer side, `EnclosureAPI`, is the skill-facing helper that *emits*
+`enclosure.*`. It lives in
 [`ovos-gui-api-client`](https://github.com/OpenVoiceOS/ovos-gui-api-client)
 alongside `GUIInterface`, so `self.gui` and `self.enclosure` come from the same
 client.
@@ -51,8 +51,8 @@ implementation.
 
 ## Documentation
 
-- [`docs/index.md`](docs/index.md) — overview, install, listener guide.
-- [`docs/enclosure-protocol.md`](docs/enclosure-protocol.md) — the full
+- [`docs/index.md`](docs/index.md): overview, install, listener guide.
+- [`docs/enclosure-protocol.md`](docs/enclosure-protocol.md): the full
   `enclosure.*` message contract with producers and listeners.
 
 ## License
