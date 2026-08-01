@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0a3](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/tree/1.0.0a3) (2026-08-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/compare/1.0.0a2...1.0.0a3)
+
+**Merged pull requests:**
+
+- docs: rewrite README in Simplified Technical English [\#8](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/pull/8) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.0.0a2](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/tree/1.0.0a2) (2026-07-04)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/compare/1.0.0a1...1.0.0a2)
@@ -15,6 +23,18 @@
 **Breaking changes:**
 
 - refactor!: register\_core\_events + instantiated callback-kwarg listener [\#4](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/pull/4) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.0.1](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/tree/0.0.1) (2026-06-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/compare/0.0.1a2...0.0.1)
+
+## [0.0.1a2](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/tree/0.0.1a2) (2026-06-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/compare/887b9df4964975012bfd796b3eb8f73393d69e3e...0.0.1a2)
+
+**Merged pull requests:**
+
+- refactor: scope to listener side; producer moves to ovos-gui-api-client [\#2](https://github.com/OpenVoiceOS/ovos-ui-enclosure-protocol/pull/2) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
